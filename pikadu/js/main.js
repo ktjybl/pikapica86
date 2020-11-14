@@ -20,11 +20,7 @@ let menuToggle = document.querySelector('#menu-toggle');
 let menu = document.querySelector('.sidebar');
 
 // отслеживаем клик по кнопке меню и запускаем функцию
- 
-
-
-const regExpValidEmail=/^\w+@\w+\.\w{2,}$/;
-
+ const regExpValidEmail=/^\w+@\w+\.\w{2,}$/;
 const loginElem=document.querySelector('.login'),
       loginForm=document.querySelector('.login-form'),
       emailInput=document.querySelector('.login-email'),
@@ -40,43 +36,48 @@ const loginElem=document.querySelector('.login'),
       postsWrapper=document.querySelector('.posts'),
       buttonNewPost=document.querySelector('.button-new-post'),
       addPostElem=document.querySelector('.add-post'),
-
+      loginForget=document.querySelector('.login-forget'),
       userNameElem=document.querySelector('.user-name');
-      
-
-const listUsers=[
-{
-id:'01',
-email:'ktjy@meta.net',
-password:'12345',
-displayName:'leon12399'
-},
-{
-id:'02',
-email:'tank25@meta.net',
-password:'818634',
-displayName:'leon86'
-}
-];
-
+const DEFAULT_PHOTO=userAvatarElem.src;      
 const setUsers={
 user:null,
+initUser(handler){
+  firebase.auth().onAuthStateChanged(user=>{
+    if(user){
+      this.user=user;
+    } else{
+       this.user=null;
+    }
+    if(handler)handler();
+  })
+},
 logIn(email, password, handler){
   if(!regExpValidEmail.test(email)){
     alert(' email не валиден');
      return;
      }
-const user=this.getUser(email);
-if(user&&user.password===password){
-this.authorizedUser(user);
-handler();
-}  else{
-alert('Пользователь с такими данными не найден')
-}
+firebase.auth().signInWithEmailAndPassword(email, password)
+.catch(err=>{
+  const errCode=err.code;
+    const errMessage=err.message;
+    if(errCode==='auth/wrong-password'){
+      alert('Неверный пароль')
+    } else if(errCode==='user-not-found') {
+      alert('Пользователь не найден')
+    } else {
+      alert(errMessage)
+    }
+});
+//const user=this.getUser(email);
+//if(user&&user.password===password){
+//this.authorizedUser(user);
+//handler();
+//}  else{
+//alert('Пользователь с такими данными не найден')
+//}
 },
-logOut(handler){
-this.user=null;
-handler();
+logOut(){
+firebase.auth().signOut();
 },
 signUp (email, password, handler) {
   if(!regExpValidEmail.test(email)){
@@ -87,70 +88,89 @@ signUp (email, password, handler) {
     alert('введите данные')
     return;
   }
-  if(!this.getUser(email)){
-   const user={email, password, displayName:email.substring(0,email.indexOf('@'))};
-    listUsers.push(user)
-this.authorizedUser(user);
-    handler();
-}else{
-alert('Пользователь с таким email уже зарегистрирован')
-}
+  firebase.auth().createUserWithEmailAndPassword(email, password)
+  .then(data=>{
+     this.editUser(email.substring(0,email.indexOf('@'),null, handler)
+  })
+  .catch(err=>{
+    const errCode=err.code;
+    const errMessage=err.message;
+    if(errCode==='auth/weak-password'){
+      alert('слабый пароль')
+    } else if(errCode==='email-already-in-use') {
+      alert('Пользователь с таким email уже зарегистрирован')
+    } else {
+      alert(errMessage)
+    }
+  });
+  //if(!this.getUser(email)){
+  // const user={email, password, displayName:email.substring(0,email.indexOf('@'))};
+  //  listUsers.push(user)
+  //  this.authorizedUser(user);
+  //  handler();
+  //}else{
+  //   
+  //}
 },
-editUser(userName, userPhoto, handler){
+editUser(displayName, photoURL, handler){
+  const user=firebase.auth().currentUser;
+  
   if(userName){
-    this.user.displayName=userName;
+    if(userPhoto){
+    user.updateProfile({
+      displayName,
+      photoURL
+    }).then(hendler)
+  }else{
+    user.updateProfile({
+    displayName
+  }).then(hendler)
   }
-  if(userPhoto){
-    this.user.photo=userPhoto;
+  
   }
-  handler();
 },
-getUser(email){
-return listUsers.find(item=> item.email===email)
-},
-authorizedUser(user){
-this.user=user;
+//getUser(email){
+//return listUsers.find(item=> item.email===email)
+//},
+//authorizedUser(user){
+//this.user=user;
+//}
+sendForget(email){
+firebase.auth().sendPasswordResetEmail(email)
+.then(()=>{
+alert('Письмо отправлено')
+})
+.catch(err=>{
+console.log(err);
+})
 }
 };
 const setPosts={
-  allPosts:[
-    {
-     title:'Заголовок поста',
-     text:'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
-     tags:['свежее', 'новое', 'горячее', 'мое', 'случайность'],
-     author:{displayName:'leon', photo:'url'},
-     date:'11.11.2020, 20:54:00',
-     like:15,
-     comments:20,
-
-  },
-  {
-    title:'Заголовок поста2',
-    text:'Далеко-далеко за словесными горами в стране гласных и согласных живут рыбные тексты. Языком что рот маленький реторический вершину текстов обеспечивает гор свой назад решила сбить маленькая дорогу жизни рукопись ему букв деревни предложения, ручеек залетают продолжил парадигматическая? Но языком сих пустился, запятой своего его снова решила меня вопроса моей своих пояс коварный, власти диких правилами напоивший они текстов ipsum первую подпоясал? Лучше, щеке подпоясал приставка большого курсивных на берегу своего? Злых, составитель агентство что вопроса ведущими о решила одна алфавит!',
-    tags:['свежее', 'новое', 'горячее', 'мое', 'случайность'],
-    author:{displayName:'yula', photo:'url'},
-    date:'15.11.2020, 20:54:00',
-    like:45,
-    comments:12,
-
- }
-],
+  allPosts:[],
 addPost(title, text, tags, handler){
+const user=firebase.auth().currentUser;
   this.allPosts.unshift({
+    id:`postID${((+new Date()).toString(16))}-${user.uid}`,
     title,
     text,
     tags:tags.split('.').map(item=>item.trim()),
     author:{
       displayName:setUsers.user.displayName,
-      photo:setUsers.user.photo,
+      photo:setUsers.user.photoURL,
     },
     date: new Date.toLocalString(),
     like:0,
     comments:0,
   })
-  if(handler){
+  firebase.database().ref('post').set(this.allPosts)
+   .then(()=>this.getPosts(handler))
+   
+},
+getPosts(handler){
+firebase.database().ref('post').on('value', snapshot=>{
+    this.allPosts=snapshot.val()||[];
     handler();
-  }
+})
 }
 };
 const toggleAuthDom=()=>{
@@ -159,7 +179,7 @@ if(user){
 loginElem.style.display='none';
 userElem.style.display='';
 userNameElem.textContent=user.displayName;
-userAvatarElem.src=user.photo||userAvatarElem.src;
+userAvatarElem.src=user.photoURL||DEFAULT_PHOTO;
 buttonNewPost.classList.add('visible');
 }else{
 loginElem.style.display='';
@@ -230,14 +250,14 @@ loginForm.addEventListener('submit', (event)=>{
   event.preventDefault();
  const emailValue=emailInput.value;
  const passwordValue=passwordInput.value;
-  setUsers.logIn(emailInput, passwordInput, toggleAuthDom);
+  setUsers.logIn(emailValue, passwordValue, toggleAuthDom);
   loginForm.reset();
 });
 loginSignup.addEventListener('click', (event)=>{
   event.preventDefault();
   const emailValue=emailInput.value;
  const passwordValue=passwordInput.value;
-  setUsers.signUp(emailInput, passwordInput, toggleAuthDom);
+  setUsers.signUp(emailValue, passwordValue, toggleAuthDom);
   loginForm.reset(); 
 });
 exitElem.addEventListener('click',event=>{
@@ -269,6 +289,11 @@ buttonNewPost.addEventListener('click', event=>{
   event.preventDefault();
   showAddPost();
 })
+loginForget.addEventListener('click', event=>{
+  event.preventDefault();
+  setUsers.sendForget(emailInput.value);
+emailInput.value='';
+})
 addPostElem.addEventListener('submit', event=>{
   event.preventDefault();
   const { title, text, tags }=addPostElem.elements;
@@ -284,7 +309,7 @@ addPostElem.addEventListener('submit', event=>{
   addPostElem.classList.remove('visible');
   addPostElem.reset();
 });
-  showAllPosts();
-  toggleAuthDom();
+  setUsers.initUser(toggleAuthDom);
+  setPosts.getPosts(showAllPosts),
 }
 document.addEventListener('DOMContentLoaded',init)
